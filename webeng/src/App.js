@@ -27,18 +27,9 @@ export default function App() {
   }
 
   async function getCurrentLocation() {
-    if (navigator.geolocation) {
-      return new Promise((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            resolve(position);
-          },
-          (error) => {
-            reject(error);
-          }
-        );
-      });
-    }
+    return new Promise((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(resolve, reject);
+    });
   }
 
 
@@ -99,9 +90,10 @@ export default function App() {
 
 
 
-  return position ? <span> Loading ... </span> : (
+  return (
+
     <MapContainer
-      center={[position ? position[0] : 51.505, position ? position[1] : -0.09]}
+      center={[position ? position[0] : 47.65931763940651, position ? position[1] : 9.453907012939455]}
       zoom={16}
       style={{ height: "100vh" }}
       whenReady={(map) => {
