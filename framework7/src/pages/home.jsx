@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Page,
   Navbar,
@@ -8,7 +8,6 @@ import {
   NavRight,
   Link,
   Toolbar,
-  Searchbar,
   Block,
   BlockTitle,
   List,
@@ -21,13 +20,39 @@ import {
   CenterLocationContext,
   DEFAULT_DESTINATION,
 } from '../js/Context';
-import My_Map from '../components/map.jsx';
-import WikiBox from '../components/WikiBox.jsx';
+import {
+  getCoordinatesByCityName,
+  My_Map,
+} from '../components/map.jsx';
+import WikiBox from '../components/wiki_box.jsx';
+import SearchBar from '../components/search_bar.jsx'
 
 const HomePage = () => {
   const [destination, setDestination] = useState(DEFAULT_DESTINATION);
   const [origin, setOrigin] = useState({});
   const [centerLocation, setCenterLocation] = useState(DEFAULT_DESTINATION);
+
+  const myMapRef = useRef();
+
+  const onLocationSearched = async (query) => {
+    try{
+      const coordinates = await getCoordinatesByCityName(query);
+      if(coordinates) {
+        const {lat, lon} = coordinates;
+        console.log(`Latitude: ${lat}, Longitude: ${lon}`);
+
+        if (myMapRef.current) {
+          myMapRef.current.fire('searched', {
+            latlng: {lat, lon}
+          });
+        }
+      }else {
+        console.warn(`No coordinates found for ${query}`);
+      }
+    } catch (error) {
+      console.error('Error: ', error);
+    }
+  }
 
   return (
     <Page name="home">
@@ -36,17 +61,19 @@ const HomePage = () => {
         <NavLeft>
           <Link iconIos="f7:menu" iconMd="material:menu" panelOpen="left" />
           <h1 className='Heading'>RevGeoCode</h1>
+
         </NavLeft>
         <NavRight>
-          <Searchbar placeholder='Search' />
+          <SearchBar onEnterPressed={onLocationSearched} myMapRef={myMapRef}/>
         </NavRight>
       </Navbar>
+      
       {/* Page content */}
       <DestinationContext.Provider value={{ destination, setDestination }}>
             <CenterLocationContext.Provider value={{ centerLocation, setCenterLocation }}>
               <OriginContext.Provider value={{ origin, setOrigin }}>
                 <WikiBox />
-                <My_Map />
+                <My_Map ref={myMapRef} />
               </OriginContext.Provider>
             </CenterLocationContext.Provider>
           </DestinationContext.Provider>

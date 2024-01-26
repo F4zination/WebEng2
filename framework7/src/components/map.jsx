@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { forwardRef, useContext, useImperativeHandle, useRef } from 'react';
 import { Page, Navbar, Block, Popup } from 'framework7-react';
 import {
     MapContainer,
@@ -24,7 +24,6 @@ const icon = L.icon({
     iconUrl: "https://unpkg.com/leaflet@1.7/dist/images/marker-icon.png",
     shadowUrl: "https://unpkg.com/leaflet@1.7/dist/images/marker-shadow.png"
 });
-
 /**
  * Parse the addressComponents of the geocoding result to an address object
  * @param addressComponents - the addressComponents of the geocoding result
@@ -47,6 +46,35 @@ export function parseAddressComponents(addressComponents) {
     });
 
     return address;
+}
+
+/**
+ * Get coordinates from a city name
+ *
+ * @param cityName - name of the city
+ * @returns {Promise<{lat, lon}|null>} - returns an object with latitude and longitude or null if no coordinates were found
+ */
+export async function getCoordinatesByCityName(cityName) {
+    const formattedCityName = encodeURIComponent(cityName);
+    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${formattedCityName}`;
+  
+    try {
+        const response = await fetch(url);
+        const data = await response.json();
+    
+        if (data.length > 0) {
+            return {
+            lat: parseFloat(data[0].lat),
+            lon: parseFloat(data[0].lon),
+            };
+        } else {
+            console.error('No coordinates found for city: ' + cityName);
+            return null;
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        return null;
+    }
 }
 
 /**
@@ -102,7 +130,8 @@ export async function getObjectByCoordinates(latitude, longitude) {
     };
 }
 
-const My_Map = () => {
+
+export const My_Map = React.forwardRef((props, ref) => {
     const { origin, setOrigin } = useContext(OriginContext);
     const { centerLocation, setCenterLocation } = useContext(CenterLocationContext);
     const { destination } = useContext(DestinationContext);
@@ -117,6 +146,7 @@ const My_Map = () => {
 
     //Call to wikipedia API
     async function fetchWikipediaInfo(placeName) {
+        const formattedPlaceName = encodeURIComponent(placeName);
         const endpoint = `https://de.wikipedia.org/w/api.php?`;
         const params = {
             action: 'query',
@@ -124,7 +154,7 @@ const My_Map = () => {
             exintro: 'true',
             explaintext: 'true',
             inprop: 'url',
-            titles: placeName,
+            titles: formattedPlaceName,
             format: 'json',
             origin: '*'
         };
@@ -164,6 +194,45 @@ const My_Map = () => {
         }
     }
 
+    function handleEvent(map, lat, lng) {
+        console.log("You clicked the map at LAT: " + lat + " and LONG: " + lng);
+        // clear the last marker
+        map.target.eachLayer((layer) => {
+            if (layer instanceof L.Marker) {
+                layer.remove();
+            }
+        });
+        // add a marker to show where you clicked
+        L.marker([lat, lng], { icon }).addTo(map.target);
+
+        // get the location name from the lat and lng
+        getObjectByCoordinates(lat, lng).then((location) => {
+            // get the wikipedia info for the location
+            fetchWikipediaInfo(location.address.city).then((data) => {
+                // Sets the current location, coordinates and wiki info
+                setCenterLocation({
+                    address: location.address,
+                    coordinates: location.coordinates,
+                    wikipedia: data.extract
+                });
+                // add a popup to the marker with the wikipedia info
+                L.marker([lat, lng], { icon })
+                    .addTo(map.target)
+                    .bindPopup(
+                        `<h2>${data.title}</h2>
+                        <p>${data.extract}</p>
+                        <a href="${data.fullurl}" target="_blank">Wikipedia</a>`
+                    )
+                    .openPopup();
+
+            })
+        });
+
+        // opens the wikipedia info box
+        f7.sheet.open($('.wikibox-sheet'));
+    }
+
+
     return (
 
         <MapContainer
@@ -173,44 +242,16 @@ const My_Map = () => {
             whenReady={(map) => {
                 console.log(map);
                 map.target.on("click", function (e) {
-                    const { lat, lng } = e.latlng;
-                    console.log("You clicked the map at LAT: " + lat + " and LONG: " + lng);
-                    // clear the last marker
-                    map.target.eachLayer((layer) => {
-                        if (layer instanceof L.Marker) {
-                            layer.remove();
-                        }
-                    });
-                    // add a marker to show where you clicked
-                    L.marker([lat, lng], { icon }).addTo(map.target);
-
-                    // get the location name from the lat and lng
-                    getObjectByCoordinates(lat, lng).then((location) => {
-                        // get the wikipedia info for the location
-                        fetchWikipediaInfo(location.address.city).then((data) => {
-                            // Sets the current location, coordinates and wiki info
-                            setCenterLocation({
-                                address: location.address,
-                                coordinates: location.coordinates,
-                                wikipedia: data.extract
-                            });
-                            // add a popup to the marker with the wikipedia info
-                            L.marker([lat, lng], { icon })
-                                .addTo(map.target)
-                                .bindPopup(
-                                    `<h2>${data.title}</h2>
-                                    <p>${data.extract}</p>
-                                    <a href="${data.fullurl}" target="_blank">Wikipedia</a>`
-                                )
-                                .openPopup();
-
-                        })
-                    });
-
-                    // opens the wikipedia info box
-                    f7.sheet.open($('.wikibox-sheet'));
+                    const {lat, lng} = e.latlng;
+                    handleEvent(map, lat, lng);
+                });
+                map.target.on("searched", function(e) {
+                    console.log('Searched event received: ', e.latlng);
+                    const {lat, lon} = e.latlng;
+                    handleEvent(map, lat, lon);
                 });
             }}
+            ref={ref}
         >
 
             <TileLayer
@@ -220,6 +261,6 @@ const My_Map = () => {
 
         </MapContainer>
     );
-};
+});
 
 export default My_Map;

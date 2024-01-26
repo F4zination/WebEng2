@@ -25,8 +25,6 @@ import {
 
 import routes from '../js/routes';
 
-
-
 const MyApp = () => {
 
   // Framework7 Parameters
@@ -50,7 +48,7 @@ const MyApp = () => {
       <Panel left reveal dark>
         <View>
           <Page>
-            <Navbar title="RevGeoCode" />
+            <Navbar title="RevGeoCode"  />
             <Block>
               <BlockTitle>Navigation</BlockTitle>
               <List strong inset >
