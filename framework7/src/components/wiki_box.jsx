@@ -13,7 +13,7 @@ import {
   OriginContext,
   CenterLocationContext
 } from '../js/Context';
-//import { setRoutingOriginDestination } from './Routing';
+import { setRoutingOriginDestination } from './Routing';
 
 /**
  * Get the wikitext for a given city
@@ -59,7 +59,7 @@ export default function WikiBox() {
    */
   async function startNavigation() {
     f7.sheet.close('.wikibox-sheet');
-    //setRoutingOriginDestination(origin.coordinates, destination.coordinates);
+    setRoutingOriginDestination(origin.coordinates, destination.coordinates);
   }
 
   return (

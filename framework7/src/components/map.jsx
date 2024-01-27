@@ -132,7 +132,6 @@ export async function getObjectByCoordinates(latitude, longitude) {
     };
 }
 
-
 export const My_Map = React.forwardRef((props, ref) => {
     const { origin, setOrigin } = useContext(OriginContext);
     const { centerLocation, setCenterLocation } = useContext(CenterLocationContext);

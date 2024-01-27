@@ -50,4 +50,4 @@ export const DEFAULT_ORIGIN = {
  * This is the default wiki text
  * @type {string}
  */
-export const DEFAULT_WIKI = 'No Wikipedia found for this destination :(';
+export const DEFAULT_WIKI = 'No Wikipedia article found for this city.';
