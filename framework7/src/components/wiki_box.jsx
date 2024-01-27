@@ -38,7 +38,6 @@ export default function WikiBox() {
   const { destination } = useContext(DestinationContext);
   const { origin } = useContext(OriginContext);
   const { centerLocation, setCenterLocation } = useContext(CenterLocationContext);
-  console.log(centerLocation)
 
   // the props used for the sheet element
   let sheetProps = {

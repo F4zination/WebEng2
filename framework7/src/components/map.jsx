@@ -4,6 +4,7 @@ import {
     MapContainer,
     TileLayer,
     useMapEvents,
+    useMap,
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
@@ -16,6 +17,7 @@ import {
     CenterLocationContext,
     DestinationContext
   } from '../js/Context';
+import { getWikipediaByCity } from './wiki_box';
 
 const icon = L.icon({
     iconSize: [25, 41],
@@ -138,9 +140,20 @@ export const My_Map = React.forwardRef((props, ref) => {
 
     const [position, setPosition] = React.useState(null);
 
-    async function getCurrentLocation() {
+    /**
+     * Get current location of user
+     * @returns {Promise<unknown>} - Promise containing user location object
+     */
+    function getCurrentLocation() {
         return new Promise((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(resolve, reject);
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                resolve(
+                    await getObjectByCoordinates(position.coords.latitude, position.coords.longitude)
+                );
+            },
+                (error) => {reject(error);}
+            );
         });
     }
 
@@ -181,20 +194,7 @@ export const My_Map = React.forwardRef((props, ref) => {
             });
     }
 
-    // Leaflet Geolocation # Depricated can be removed
-    async function getLocationName(lat, lon) {
-        const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`;
-
-        try {
-            const response = await fetch(url);
-            const data = await response.json();
-            return data.address.village || data.address.city || data.address.town || data.address.hamlet || data.address.county || data.address.state || data.address.country;
-        } catch (error) {
-            console.error('Error:', error);
-        }
-    }
-
-    function handleEvent(map, lat, lng) {
+    function handleClickEvent(map, lat, lng) {
         console.log("You clicked the map at LAT: " + lat + " and LONG: " + lng);
         // clear the last marker
         map.target.eachLayer((layer) => {
@@ -208,28 +208,47 @@ export const My_Map = React.forwardRef((props, ref) => {
         // get the location name from the lat and lng
         getObjectByCoordinates(lat, lng).then((location) => {
             // get the wikipedia info for the location
-            fetchWikipediaInfo(location.address.city).then((data) => {
+            getWikipediaByCity(location.address.city).then((data) => {
                 // Sets the current location, coordinates and wiki info
                 setCenterLocation({
                     address: location.address,
                     coordinates: location.coordinates,
-                    wikipedia: data.extract
+                    wikipedia: data
                 });
                 // add a popup to the marker with the wikipedia info
                 L.marker([lat, lng], { icon })
                     .addTo(map.target)
                     .bindPopup(
-                        `<h2>${data.title}</h2>
-                        <p>${data.extract}</p>
-                        <a href="${data.fullurl}" target="_blank">Wikipedia</a>`
+                        `<h2>${location.address.city}</h2>`
                     )
-                    .openPopup();
-
+                    .openPopup()
+                    .on('click', function() {
+                        f7.sheet.open($('.wikibox-sheet'));
+                    });
             })
         });
+    }
 
-        // opens the wikipedia info box
-        f7.sheet.open($('.wikibox-sheet'));
+    // get the current location and set the position
+    React.useEffect(() => {
+        getCurrentLocation()
+            .then((location) => {
+                setPosition([location.coordinates.lat, location.coordinates.lng]);
+                setCenterLocation(location);                
+            })
+            .catch((error) => {
+                console.error('Error getting current location:', error);
+                setPosition(DEFAULT_ORIGIN.coordinates.lat, DEFAULT_ORIGIN.coordinates.lng);
+                setCenterLocation(DEFAULT_ORIGIN);
+            });
+    }, []);
+
+    /**
+     * Flies to the centerLocation whenever it changes
+     */
+    function FlyToAddress() {
+        const map = useMap();
+        map.flyTo(centerLocation.coordinates);
     }
 
 
@@ -240,24 +259,31 @@ export const My_Map = React.forwardRef((props, ref) => {
             zoom={16}
             style={{ height: "93vh", width: "100%" }}
             whenReady={(map) => {
-                console.log(map);
                 map.target.on("click", function (e) {
                     const {lat, lng} = e.latlng;
-                    handleEvent(map, lat, lng);
+                    handleClickEvent(map, lat, lng);
                 });
                 map.target.on("searched", function(e) {
                     console.log('Searched event received: ', e.latlng);
                     const {lat, lon} = e.latlng;
-                    handleEvent(map, lat, lon);
+                    handleClickEvent(map, lat, lon);
                 });
+                map.target.on("locationfound", function(e) {
+                    console.log('Location found event received: ', e.latlng);
+                    const {lat, lng} = e.latlng;
+                    console.log(lat, lng);
+                    handleClickEvent(map, lat, lng);
+                });
+                map.target.locate();
+
             }}
             ref={ref}
         >
-
             <TileLayer
                 attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
+            <FlyToAddress />
 
         </MapContainer>
     );
