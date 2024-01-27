@@ -18,6 +18,7 @@ import {
     DestinationContext
   } from '../js/Context';
 import { getWikipediaByCity } from './wiki_box';
+import Routing, { setRoutingOriginDestination, setRoutingWaypoint } from './Routing';
 
 const icon = L.icon({
     iconSize: [25, 41],
@@ -135,6 +136,7 @@ export async function getObjectByCoordinates(latitude, longitude) {
 export const My_Map = React.forwardRef((props, ref) => {
     const { origin, setOrigin } = useContext(OriginContext);
     const { centerLocation, setCenterLocation } = useContext(CenterLocationContext);
+    const { setDestination } = useContext(DestinationContext);    
     const { destination } = useContext(DestinationContext);
 
     const [position, setPosition] = React.useState(null);
@@ -214,6 +216,49 @@ export const My_Map = React.forwardRef((props, ref) => {
                     coordinates: location.coordinates,
                     wikipedia: data
                 });
+                setOrigin({
+                    address: location.address,
+                    coordinates: location.coordinates,
+                    wikipedia: data
+                })
+                setRoutingWaypoint(location.coordinates);
+                // add a popup to the marker with the wikipedia info
+                L.marker([lat, lng], { icon })
+                    .addTo(map.target)
+                    .bindPopup(
+                        `<h2>${location.address.city}</h2>`
+                    )
+                    .openPopup()
+                    .on('click', function() {
+                        f7.sheet.open($('.wikibox-sheet'));
+                    });
+            })
+        });
+    }
+
+    function handleSearchEvent(map, lat, lng) {
+        console.log("You searched location is at LAT: " + lat + " and LONG: " + lng);
+        // clear the last search marker TODO:
+
+        // add a marker to show where your search is
+        L.marker([lat, lng], { icon }).addTo(map.target);
+
+        // get the location name from the lat and lng
+        getObjectByCoordinates(lat, lng).then((location) => {
+            // get the wikipedia info for the location
+            getWikipediaByCity(location.address.city).then((data) => {
+                // Sets the current location, coordinates and wiki info
+                setCenterLocation({
+                    address: location.address,
+                    coordinates: location.coordinates,
+                    wikipedia: data
+                });
+                setDestination({
+                    address: location.address,
+                    coordinates: location.coordinates,
+                    wikipedia: data
+                })
+                setRoutingWaypoint(location.coordinates);
                 // add a popup to the marker with the wikipedia info
                 L.marker([lat, lng], { icon })
                     .addTo(map.target)
@@ -265,7 +310,7 @@ export const My_Map = React.forwardRef((props, ref) => {
                 map.target.on("searched", function(e) {
                     console.log('Searched event received: ', e.latlng);
                     const {lat, lon} = e.latlng;
-                    handleClickEvent(map, lat, lon);
+                    handleSearchEvent(map, lat, lon);
                 });
                 map.target.on("locationfound", function(e) {
                     console.log('Location found event received: ', e.latlng);
@@ -283,7 +328,7 @@ export const My_Map = React.forwardRef((props, ref) => {
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
             <FlyToAddress />
-
+            <Routing />
         </MapContainer>
     );
 });

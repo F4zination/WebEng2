@@ -18,6 +18,7 @@ export function setRoutingOriginDestination(start, end) {
   routingControl.setWaypoints([]);
   routingControl.spliceWaypoints(0, 1, start); // -> Start LatLng
   routingControl.spliceWaypoints(1, 1, end); // -> Target LatLng
+  console.log(routingControl.getWaypoints());
 }
 
 /**
