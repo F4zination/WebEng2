@@ -335,13 +335,21 @@ export const My_Map = React.forwardRef((props, ref) => {
                             .then((location) => {
                                 setPosition([location.coordinates.lat, location.coordinates.lng]);
                                 setCenterLocation(location);
-                                L.marker([lat, lng], { icon })
+
+                                // clear the last marker
+                                map.target.eachLayer((layer) => {
+                                    if (layer instanceof L.Marker) {
+                                        layer.remove();
+                                    }
+                                });
+                                L.marker([location.coordinates.lat, location.coordinates.lng], { icon })
                                     .addTo(map.target)
                                     .bindPopup(`<h2>${location.address.city}</h2>`)
                                     .openPopup()
                                     .on("click", function () {
                                         f7.sheet.open($(".infosheet"));
                                     });
+
                             })
                             .catch((error) => {
                                 console.error("Error getting current location:", error);
