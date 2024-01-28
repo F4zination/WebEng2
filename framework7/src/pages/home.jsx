@@ -35,18 +35,18 @@ const HomePage = () => {
   const myMapRef = useRef();
 
   const onLocationSearched = async (query) => {
-    try{
+    try {
       const coordinates = await getCoordinatesByCityName(query);
-      if(coordinates) {
-        const {lat, lon} = coordinates;
+      if (coordinates) {
+        const { lat, lon } = coordinates;
         console.log(`Latitude: ${lat}, Longitude: ${lon}`);
 
         if (myMapRef.current) {
           myMapRef.current.fire('searched', {
-            latlng: {lat, lon}
+            latlng: { lat, lon }
           });
         }
-      }else {
+      } else {
         console.warn(`No coordinates found for ${query}`);
       }
     } catch (error) {
@@ -64,19 +64,20 @@ const HomePage = () => {
 
         </NavLeft>
         <NavRight>
-          <SearchBar onEnterPressed={onLocationSearched} myMapRef={myMapRef}/>
+          <i className="icon f7-icons">search</i>
+          <SearchBar onEnterPressed={onLocationSearched} myMapRef={myMapRef} />
         </NavRight>
       </Navbar>
-      
+
       {/* Page content */}
       <DestinationContext.Provider value={{ destination, setDestination }}>
-            <CenterLocationContext.Provider value={{ centerLocation, setCenterLocation }}>
-              <OriginContext.Provider value={{ origin, setOrigin }}>
-                <WikiBox />
-                <My_Map ref={myMapRef} />
-              </OriginContext.Provider>
-            </CenterLocationContext.Provider>
-          </DestinationContext.Provider>
+        <CenterLocationContext.Provider value={{ centerLocation, setCenterLocation }}>
+          <OriginContext.Provider value={{ origin, setOrigin }}>
+            <WikiBox />
+            <My_Map ref={myMapRef} />
+          </OriginContext.Provider>
+        </CenterLocationContext.Provider>
+      </DestinationContext.Provider>
     </Page >
   );
 };
