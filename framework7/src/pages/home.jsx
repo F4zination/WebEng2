@@ -24,7 +24,7 @@ import {
   getCoordinatesByCityName,
   My_Map,
 } from '../components/map.jsx';
-import WikiBox from '../components/wiki_box.jsx';
+import WikiBox from '../components/info_sheet.jsx';
 import SearchBar from '../components/search_bar.jsx'
 
 const HomePage = () => {
