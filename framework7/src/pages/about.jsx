@@ -1,6 +1,10 @@
 import React from 'react';
 import { Page, Navbar, Block, BlockTitle, CardContent } from 'framework7-react';
 
+/**
+ * Renders the About page.
+ * @returns {JSX.Element} The About page component.
+ */
 const AboutPage = () => (
   <Page>
     <Navbar title="About" backLink="Back" />

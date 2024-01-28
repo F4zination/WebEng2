@@ -140,7 +140,7 @@ export async function getObjectByCoordinates(latitude, longitude) {
 
 export const My_Map = React.forwardRef((props, ref) => {
     const { origin, setOrigin } = useContext(FirstLocationCT);
-    const { centerLocation, setCenterLocation } = useContext(
+    const { currentLocation, setCurrentLocation } = useContext(
         CurrentLocationCT
     );
     const { setDestination } = useContext(SecondLocationCT);
@@ -152,7 +152,7 @@ export const My_Map = React.forwardRef((props, ref) => {
      * Get current location of user
      * @returns {Promise<unknown>} - Promise containing user location object
      */
-    function getCurrentLocation() {
+    function getUserLocation() {
         return new Promise((resolve, reject) => {
             navigator.geolocation.getCurrentPosition(
                 async (position) => {
@@ -228,7 +228,7 @@ export const My_Map = React.forwardRef((props, ref) => {
             // get the wikipedia info for the location
             getWikipediaByCity(location.address.city).then((data) => {
                 // Sets the current location, coordinates and wiki info
-                setCenterLocation({
+                setCurrentLocation({
                     address: location.address,
                     coordinates: location.coordinates,
                     wikipedia: data,
@@ -265,7 +265,7 @@ export const My_Map = React.forwardRef((props, ref) => {
             // get the wikipedia info for the location
             getWikipediaByCity(location.address.city).then((data) => {
                 // Sets the current location, coordinates and wiki info
-                setCenterLocation({
+                setCurrentLocation({
                     address: location.address,
                     coordinates: location.coordinates,
                     wikipedia: data,
@@ -290,10 +290,10 @@ export const My_Map = React.forwardRef((props, ref) => {
 
     // get the current location and set the position
     React.useEffect(() => {
-        getCurrentLocation()
+        getUserLocation()
             .then((location) => {
                 setPosition([location.coordinates.lat, location.coordinates.lng]);
-                setCenterLocation(location);
+                setCurrentLocation(location);
             })
             .catch((error) => {
                 console.error("Error getting current location:", error);
@@ -301,16 +301,16 @@ export const My_Map = React.forwardRef((props, ref) => {
                     DEFAULT_LOCATION.coordinates.lat,
                     DEFAULT_LOCATION.coordinates.lng
                 );
-                setCenterLocation(DEFAULT_LOCATION);
+                setCurrentLocation(DEFAULT_LOCATION);
             });
     }, []);
 
     /**
-     * Flies to the centerLocation whenever it changes
+     * Flies to the currentLocation whenever it changes
      */
     function FlyToAddress() {
         const map = useMap();
-        map.flyTo(centerLocation.coordinates);
+        map.flyTo(currentLocation.coordinates);
     }
 
     return (
@@ -330,10 +330,10 @@ export const My_Map = React.forwardRef((props, ref) => {
                     console.log(e)
                     console.log(mapWidth, mapHeight)
                     if (e.containerPoint.x > mapWidth - 150 && e.containerPoint.y > mapHeight - 100) {
-                        getCurrentLocation()
+                        getUserLocation()
                             .then((location) => {
                                 setPosition([location.coordinates.lat, location.coordinates.lng]);
-                                setCenterLocation(location);
+                                setCurrentLocation(location);
 
                                 // clear the last marker
                                 map.target.eachLayer((layer) => {
@@ -356,7 +356,7 @@ export const My_Map = React.forwardRef((props, ref) => {
                                     DEFAULT_LOCATION.coordinates.lat,
                                     DEFAULT_LOCATION.coordinates.lng
                                 );
-                                setCenterLocation(DEFAULT_LOCATION);
+                                setCurrentLocation(DEFAULT_LOCATION);
                             });
                         return;
 

@@ -55,10 +55,10 @@ export async function getWikipediaByCity(placeName) {
  * Create a information sheet for a given city
  * @returns {JSX.Element} the information sheet element
  */
-export default function infosheet() {
+export default function InfoSheet() {
   const { destination } = useContext(SecondLocationCT);
   const { origin } = useContext(FirstLocationCT);
-  const { centerLocation } = useContext(CurrentLocationCT);
+  const { currentLocation } = useContext(CurrentLocationCT);
 
   /**
    * Navigate to the location that was searched of clicked last
@@ -93,7 +93,7 @@ export default function infosheet() {
             className="display-flex padding justify-content-space-between align-items-center"
             id="infosheet-header"
           >
-            <h1>{centerLocation.address.city}</h1>
+            <h1>{currentLocation.address.city}</h1>
             <Button
               id="navigateButton"
               tooltip={"Navigate to " + destination.address.city}
@@ -120,7 +120,7 @@ export default function infosheet() {
           <BlockTitle medium className="margin-top no-margin-left">
             Wikipedia
           </BlockTitle>
-          <p>{centerLocation.wikipedia}</p>
+          <p>{currentLocation.wikipedia}</p>
         </div>
       </div>
     </Sheet>
