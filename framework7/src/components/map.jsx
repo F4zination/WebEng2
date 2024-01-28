@@ -331,8 +331,19 @@ export const My_Map = React.forwardRef((props, ref) => {
                     console.log(e)
                     console.log(mapWidth, mapHeight)
                     if (e.containerPoint.x > mapWidth - 150 && e.containerPoint.y > mapHeight - 100) {
-                        console.log("Clicked on home button");
-                        setCenterLocation(DEFAULT_ORIGIN);
+                        getCurrentLocation()
+                            .then((location) => {
+                                setPosition([location.coordinates.lat, location.coordinates.lng]);
+                                setCenterLocation(location);
+                            })
+                            .catch((error) => {
+                                console.error("Error getting current location:", error);
+                                setPosition(
+                                    DEFAULT_ORIGIN.coordinates.lat,
+                                    DEFAULT_ORIGIN.coordinates.lng
+                                );
+                                setCenterLocation(DEFAULT_ORIGIN);
+                            });
                         return;
 
                     }
@@ -340,24 +351,7 @@ export const My_Map = React.forwardRef((props, ref) => {
                     const { lat, lng } = e.latlng;
                     handleClickEvent(map, lat, lng);
                 });
-                map.target.on("moveend", function (e) {
-                    console.log("moveend event received: ");
-                    const { lat, lng } = map.target.getCenter();
-                    var pos = {
-                        coordinates: {
-                            lat: lat,
-                            lng: lng
-                        },
-                        address: {
-                            city: "Unknown"
-                        }
-                    }
-                    if (pos.coordinates.lat != centerLocation.coordinates.lat && pos.coordinates.lng != centerLocation.coordinates.lng) {
-                        // setCenterLocation(pos) is bad because it will trigger a re-render
-                        setCenterLocation(pos);
-                    }
 
-                });
                 map.target.on("searched", function (e) {
                     console.log("Searched event received: ", e.latlng);
                     const { lat, lon } = e.latlng;
