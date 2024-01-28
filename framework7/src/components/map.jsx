@@ -1,11 +1,19 @@
-import React, {
-    forwardRef,
-    useContext,
-    useImperativeHandle,
-    useRef,
-} from "react";
-import { Page, Navbar, Block, Popup, Button, Icon } from "framework7-react";
-import { MapContainer, TileLayer, useMapEvents, useMap } from "react-leaflet";
+/**
+ * @fileoverview This file contains the implementation of the Map component.
+ * The Map component is responsible for displaying a map and handling user interactions such as clicking on the map or searching for locations.
+ * It uses the react-leaflet library to integrate with Leaflet, an open-source JavaScript library for interactive maps.
+ * The Map component also makes use of other components and functions such as the Icon component from framework7-react, the getWikipediaByCity function from info_sheet.js, and the Routing component.
+ * 
+ * @module Map
+ * @exports My_Map
+ * @exports parseToAdress
+ * @exports getCoordinatesFromCity
+ * @exports getObjectByCoordinates
+ */
+
+import React, { useContext } from "react";
+import { Icon } from "framework7-react";
+import { MapContainer, TileLayer, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { f7 } from "framework7-react";
@@ -17,11 +25,13 @@ import {
     SecondLocationCT,
 } from "../js/context";
 import { getWikipediaByCity } from "./info_sheet";
-import Routing, {
-    setRoutingCoordinates,
-    setRoutWaypoint,
-} from "./routing";
+import Routing, { setRoutWaypoint } from "./routing";
 
+/**
+ * Creates a Leaflet icon object for markers on the map.
+ * 
+ * @type {L.Icon}
+ */
 const icon = L.icon({
     iconSize: [25, 41],
     iconAnchor: [10, 41],
@@ -29,28 +39,30 @@ const icon = L.icon({
     iconUrl: "https://unpkg.com/leaflet@1.7/dist/images/marker-icon.png",
     shadowUrl: "https://unpkg.com/leaflet@1.7/dist/images/marker-shadow.png",
 });
+
 /**
- * Parse the addressComponents of the geocoding result to an address object
- * @param addressComponents - the addressComponents of the geocoding result
- * @returns {{country: string, city: string, street: string, houseNumber: number}} - the address object
+ * Parses the address components obtained from the reverse geocoding API response into a structured address object.
+ * 
+ * @param {Object} addressComponents - The address components obtained from the reverse geocoding API response.
+ * @returns {Object} The parsed address object.
  */
-export function parseAddressComponents(addressComponents) {
+export function parseToAdress(addressComponents) {
     const address = {};
 
     Object.entries(addressComponents).forEach(([key, component]) => {
         if (key.includes("number")) {
             address.streetNumber = component;
-        } else if (key == "road") {
+        } else if (key === "road") {
             address.street = component;
         } else if (
-            key == "city" ||
-            key == "village" ||
-            key == "town" ||
-            key == "hamlet" ||
-            key == "suburb"
+            key === "suburb" ||
+            key === "village" ||
+            key === "town" ||
+            key === "city" ||
+            key === "hamlet"
         ) {
             address.city = component;
-        } else if (key == "country") {
+        } else if (key === "country") {
             address.country = component;
         }
     });
@@ -59,12 +71,12 @@ export function parseAddressComponents(addressComponents) {
 }
 
 /**
- * Get coordinates from a city name
- *
- * @param cityName - name of the city
- * @returns {Promise<{lat, lon}|null>} - returns an object with latitude and longitude or null if no coordinates were found
+ * Retrieves the coordinates (latitude and longitude) of a city using the Nominatim geocoding API.
+ * 
+ * @param {string} cityName - The name of the city.
+ * @returns {Promise<Object|null>} A promise that resolves to an object containing the latitude and longitude of the city, or null if no coordinates are found.
  */
-export async function getCoordinatesByCityName(cityName) {
+export async function getCoordinatesFromCity(cityName) {
     const formattedCityName = encodeURIComponent(cityName);
     const url = `https://nominatim.openstreetmap.org/search?format=json&q=${formattedCityName}`;
 
@@ -78,7 +90,7 @@ export async function getCoordinatesByCityName(cityName) {
                 lon: parseFloat(data[0].lon),
             };
         } else {
-            console.error("No coordinates found for city: " + cityName);
+            console.error("Could not find any coordinates for: " + cityName);
             return null;
         }
     } catch (error) {
@@ -88,19 +100,19 @@ export async function getCoordinatesByCityName(cityName) {
 }
 
 /**
- * Get the address from the latlng
- *
- * @param latitude - latitude of the address
- * @param longitude - longitude of the address
- * @returns {Promise<{}|null>} - returns an object with the address or null if no address was found
+ * Retrieves the address information (street, city, country, etc.) from the coordinates (latitude and longitude) using the Nominatim reverse geocoding API.
+ * 
+ * @param {number} lat - The latitude.
+ * @param {number} lon - The longitude.
+ * @returns {Promise<Object|null>} A promise that resolves to an object containing the parsed address information, or null if no address is found.
  */
-async function getAddressByCoordinates(lat, lon) {
+async function getAddressFromCoordinates(lat, lon) {
     const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`;
 
     try {
         const response = await fetch(url);
         const data = await response.json();
-        const newAddress = parseAddressComponents(data.address);
+        const newAddress = parseToAdress(data.address);
 
         return newAddress;
     } catch (error) {
@@ -110,22 +122,18 @@ async function getAddressByCoordinates(lat, lon) {
 }
 
 /**
- * Get the location object from the address
- * @param latitude - latitude of the address
- * @param longitude - longitude of the address
- * @returns {Promise<{address: {}, coordinates: {lng, lat}}|{address: {country: string, city: string, streetNumber: string, street: string}, coordinates: {lng: number, lat: number}}>} - returns an object with the address and coordinates or a default address if no address was found
+ * Retrieves an object containing the coordinates and address information for a given latitude and longitude.
+ * If no address is found, it returns the default location.
+ * 
+ * @param {number} latitude - The latitude.
+ * @param {number} longitude - The longitude.
+ * @returns {Promise<Object>} A promise that resolves to an object containing the coordinates and address information.
  */
 export async function getObjectByCoordinates(latitude, longitude) {
-    let address = await getAddressByCoordinates(latitude, longitude);
+    let address = await getAddressFromCoordinates(latitude, longitude);
     if (!address) {
-        console.error("No address found for " + latitude + " " + longitude + "\n");
-        f7.dialog.alert(
-            "No address found for lat " +
-            latitude +
-            " lng " +
-            longitude +
-            "\n Using default destination instead.",
-            "Error: Unable to locate"
+        console.error(
+            "No address found for coordinates: " + latitude + " " + longitude + "\n"
         );
         return DEFAULT_LOCATION;
     }
@@ -138,19 +146,24 @@ export async function getObjectByCoordinates(latitude, longitude) {
     };
 }
 
+/**
+ * The Map component displays a map and handles user interactions.
+ * 
+ * @param {Object} props - The component props.
+ * @param {React.Ref} ref - The component ref.
+ * @returns {React.Element} The rendered Map component.
+ */
 export const My_Map = React.forwardRef((props, ref) => {
-    const { origin, setOrigin } = useContext(FirstLocationCT);
-    const { currentLocation, setCurrentLocation } = useContext(
-        CurrentLocationCT
-    );
-    const { setDestination } = useContext(SecondLocationCT);
-    const { destination } = useContext(SecondLocationCT);
+    const { setFirstLocation } = useContext(FirstLocationCT);
+    const { currentLocation, setCurrentLocation } = useContext(CurrentLocationCT);
+    const { setSecondLocation } = useContext(SecondLocationCT);
 
     const [position, setPosition] = React.useState(null);
 
     /**
-     * Get current location of user
-     * @returns {Promise<unknown>} - Promise containing user location object
+     * Retrieves the user's current location using the Geolocation API.
+     * 
+     * @returns {Promise<Object>} A promise that resolves to an object containing the user's current location.
      */
     function getUserLocation() {
         return new Promise((resolve, reject) => {
@@ -170,55 +183,20 @@ export const My_Map = React.forwardRef((props, ref) => {
         });
     }
 
-    //Call to wikipedia API
-    async function fetchWikipediaInfo(placeName) {
-        const formattedPlaceName = encodeURIComponent(placeName);
-        const endpoint = `https://de.wikipedia.org/w/api.php?`;
-        const params = {
-            action: "query",
-            prop: "extracts|info",
-            exintro: "true",
-            explaintext: "true",
-            inprop: "url",
-            titles: formattedPlaceName,
-            format: "json",
-            origin: "*",
-        };
-
-        const url = endpoint + new URLSearchParams(params).toString();
-
-        return fetch(url)
-            .then((response) => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then((data) => {
-                const page = Object.values(data.query.pages)[0];
-                return {
-                    title: page.title,
-                    extract: page.extract,
-                    fullurl: page.fullurl,
-                };
-            })
-            .catch((error) => {
-                console.error("Fetching Wikipedia data failed:", error);
-            });
-    }
-
-    function handleClickEvent(map, lat, lng) {
-        console.log("You clicked the map at LAT: " + lat + " and LONG: " + lng);
-
+    /**
+     * Handles the location change event when the user clicks on the map.
+     * 
+     * @param {L.Map} map - The Leaflet map instance.
+     * @param {number} lat - The latitude of the clicked location.
+     * @param {number} lng - The longitude of the clicked location.
+     */
+    function handleLocationChangeEvent(map, lat, lng) {
         // clear the last marker
         map.target.eachLayer((layer) => {
             if (layer instanceof L.Marker) {
                 layer.remove();
             }
         });
-
-
-
 
         // add a marker to show where you clicked
         L.marker([lat, lng], { icon }).addTo(map.target);
@@ -233,7 +211,7 @@ export const My_Map = React.forwardRef((props, ref) => {
                     coordinates: location.coordinates,
                     wikipedia: data,
                 });
-                setOrigin({
+                setFirstLocation({
                     address: location.address,
                     coordinates: location.coordinates,
                     wikipedia: data,
@@ -251,12 +229,14 @@ export const My_Map = React.forwardRef((props, ref) => {
         });
     }
 
+    /**
+     * Handles the search event when the user searches for a location on the map.
+     * 
+     * @param {L.Map} map - The Leaflet map instance.
+     * @param {number} lat - The latitude of the searched location.
+     * @param {number} lng - The longitude of the searched location.
+     */
     function handleSearchEvent(map, lat, lng) {
-        console.log(
-            "You searched location is at LAT: " + lat + " and LONG: " + lng
-        );
-        // clear the last search marker TODO:
-
         // add a marker to show where your search is
         L.marker([lat, lng], { icon }).addTo(map.target);
 
@@ -270,7 +250,7 @@ export const My_Map = React.forwardRef((props, ref) => {
                     coordinates: location.coordinates,
                     wikipedia: data,
                 });
-                setDestination({
+                setSecondLocation({
                     address: location.address,
                     coordinates: location.coordinates,
                     wikipedia: data,
@@ -297,18 +277,18 @@ export const My_Map = React.forwardRef((props, ref) => {
             })
             .catch((error) => {
                 console.error("Error getting current location:", error);
-                setPosition(
+                setPosition([
                     DEFAULT_LOCATION.coordinates.lat,
                     DEFAULT_LOCATION.coordinates.lng
-                );
+                ]);
                 setCurrentLocation(DEFAULT_LOCATION);
             });
     }, []);
 
     /**
-     * Flies to the currentLocation whenever it changes
+     * Fly to the user's current location on the map.
      */
-    function FlyToAddress() {
+    function FlyToCurrentLocatio() {
         const map = useMap();
         map.flyTo(currentLocation.coordinates);
     }
@@ -327,12 +307,16 @@ export const My_Map = React.forwardRef((props, ref) => {
                     const mapHeight = map.target.getSize().y;
                     const mapWidth = map.target.getSize().x;
                     // check if the click was on the home button
-                    console.log(e)
-                    console.log(mapWidth, mapHeight)
-                    if (e.containerPoint.x > mapWidth - 150 && e.containerPoint.y > mapHeight - 100) {
+                    if (
+                        e.containerPoint.x > mapWidth - 150 &&
+                        e.containerPoint.y > mapHeight - 100
+                    ) {
                         getUserLocation()
                             .then((location) => {
-                                setPosition([location.coordinates.lat, location.coordinates.lng]);
+                                setPosition([
+                                    location.coordinates.lat,
+                                    location.coordinates.lng,
+                                ]);
                                 setCurrentLocation(location);
 
                                 // clear the last marker
@@ -341,29 +325,29 @@ export const My_Map = React.forwardRef((props, ref) => {
                                         layer.remove();
                                     }
                                 });
-                                L.marker([location.coordinates.lat, location.coordinates.lng], { icon })
+                                L.marker([location.coordinates.lat, location.coordinates.lng], {
+                                    icon,
+                                })
                                     .addTo(map.target)
                                     .bindPopup(`<h2>${location.address.city}</h2>`)
                                     .openPopup()
                                     .on("click", function () {
                                         f7.sheet.open($(".infosheet"));
                                     });
-
                             })
                             .catch((error) => {
                                 console.error("Error getting current location:", error);
-                                setPosition(
+                                setPosition([
                                     DEFAULT_LOCATION.coordinates.lat,
                                     DEFAULT_LOCATION.coordinates.lng
-                                );
+                                ]);
                                 setCurrentLocation(DEFAULT_LOCATION);
                             });
                         return;
-
                     }
 
                     const { lat, lng } = e.latlng;
-                    handleClickEvent(map, lat, lng);
+                    handleLocationChangeEvent(map, lat, lng);
                 });
 
                 map.target.on("searched", function (e) {
@@ -374,8 +358,7 @@ export const My_Map = React.forwardRef((props, ref) => {
                 map.target.on("locationfound", function (e) {
                     console.log("Location found event received: ", e.latlng);
                     const { lat, lng } = e.latlng;
-                    console.log(lat, lng);
-                    handleClickEvent(map, lat, lng);
+                    handleLocationChangeEvent(map, lat, lng);
                 });
                 map.target.locate();
             }}
@@ -385,7 +368,7 @@ export const My_Map = React.forwardRef((props, ref) => {
                 attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-            <FlyToAddress />
+            <FlyToCurrentLocatio />
             <Routing />
 
             <button id="BacktoHome">
@@ -393,11 +376,7 @@ export const My_Map = React.forwardRef((props, ref) => {
                     <i className="f7-icons">house</i>
                 </Icon>
             </button>
-
-
-
         </MapContainer>
-
     );
 });
 

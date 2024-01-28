@@ -15,7 +15,7 @@ import {
   CurrentLocationCT,
   DEFAULT_LOCATION,
 } from "../js/context.js";
-import { getCoordinatesByCityName, My_Map } from "../components/map.jsx";
+import { getCoordinatesFromCity, My_Map } from "../components/map.jsx";
 import InfoSheet from "../components/info_sheet.jsx";
 import SearchBar from "../components/search_bar.jsx";
 
@@ -25,8 +25,8 @@ import SearchBar from "../components/search_bar.jsx";
  * @returns {JSX.Element} The rendered home page.
  */
 const HomePage = () => {
-  const [destination, setDestination] = useState(DEFAULT_LOCATION);
-  const [origin, setOrigin] = useState({});
+  const [destination, setSecondLocation] = useState(DEFAULT_LOCATION);
+  const [origin, setFirstLocation] = useState({});
   const [currentLocation, setCurrentLocation] = useState(DEFAULT_LOCATION);
 
   const myMapRef = useRef();
@@ -39,7 +39,7 @@ const HomePage = () => {
    */
   const onLocationSearched = async (query) => {
     try {
-      const coordinates = await getCoordinatesByCityName(query);
+      const coordinates = await getCoordinatesFromCity(query);
       if (coordinates) {
         const { lat, lon } = coordinates;
         console.log(`Latitude: ${lat}, Longitude: ${lon}`);
@@ -71,11 +71,11 @@ const HomePage = () => {
         </NavRight>
       </Navbar>
       {/* Page content */}
-      <SecondLocationCT.Provider value={{ destination, setDestination }}>
+      <SecondLocationCT.Provider value={{ destination, setSecondLocation }}>
         <CurrentLocationCT.Provider
           value={{ currentLocation, setCurrentLocation }}
         >
-          <FirstLocationCT.Provider value={{ origin, setOrigin }}>
+          <FirstLocationCT.Provider value={{ origin, setFirstLocation }}>
             <InfoSheet />
             <My_Map ref={myMapRef} />
           </FirstLocationCT.Provider>
