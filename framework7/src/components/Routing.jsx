@@ -1,55 +1,51 @@
-/**
- * The Routing component is used to display the map page.
- */
-import L from 'leaflet';
-import 'leaflet-routing-machine/dist/leaflet-routing-machine.css';
-import 'leaflet-routing-machine';
-import '../css/routing.css';
-import { useMap } from 'react-leaflet';
-import { f7 } from 'framework7-react';
-import { $ } from 'dom7';
+import "../css/routing.css";
+import L from "leaflet";
+import { useMap } from "react-leaflet";
+import "leaflet-routing-machine/dist/leaflet-routing-machine.css";
+import "leaflet-routing-machine";
 
 /**
- * Set the routing origin and destination.
- * @param start - the origin
- * @param end - the destination
+ * Sets the routing coordinates for the controller.
+ * 
+ * @param {LatLng} start - The start coordinates.
+ * @param {LatLng} end - The end coordinates.
  */
-export function setRoutingOriginDestination(start, end) {
-  routingControl.setWaypoints([]);
-  routingControl.spliceWaypoints(0, 1, start); // -> Start LatLng
-  routingControl.spliceWaypoints(1, 1, end); // -> Target LatLng
-  console.log(routingControl.getWaypoints());
+export function setRoutingCoordinates(start, end) {
+  controller.setWaypoints([]);
+  controller.spliceWaypoints(0, 1, start);
+  controller.spliceWaypoints(1, 1, end);
 }
 
 /**
- * Set a routing waypoint.
- * @param coordinates - the coordinates of the waypoint
+ * Sets a single waypoint for the routing controller.
+ * 
+ * @param {LatLng} coordinates - The coordinates of the waypoint.
  */
-export function setRoutingWaypoint(coordinates) {
-  routingControl.setWaypoints([coordinates]);
+export function setRoutWaypoint(coordinates) {
+  controller.setWaypoints([coordinates]);
 }
 
 /**
- * The routingControl is used to display the routing.
+ * The routing controller for the map.
  */
-export const routingControl = L.Routing.control({
+export const controller = L.Routing.control({
   waypoints: [],
-  draggableWaypoints: false,
-  routeWhileDragging: false,
   autoRoute: true,
+  routeWhileDragging: false,
+  draggableWaypoints: false,
   createMarker: function () {
     return null;
-  }
+  },
 });
 
 /**
- * Generate the routing control.
- *
- * @returns {null}
+ * Renders the routing component on the map.
+ * 
+ * @returns {null} Returns null.
  */
 export default function Routing() {
   const map = useMap();
   if (!map) return null;
-  routingControl.addTo(map);
+  controller.addTo(map);
   return null;
 }
