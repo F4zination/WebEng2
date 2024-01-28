@@ -11,17 +11,16 @@ import L from "leaflet";
 import { f7 } from "framework7-react";
 import { $ } from "dom7";
 import {
-    DEFAULT_DESTINATION,
-    DEFAULT_ORIGIN,
-    OriginContext,
-    CenterLocationContext,
-    DestinationContext,
-} from "../js/Context";
+    DEFAULT_LOCATION,
+    FirstLocationCT,
+    CurrentLocationCT,
+    SecondLocationCT,
+} from "../js/context";
 import { getWikipediaByCity } from "./info_sheet";
 import Routing, {
-    setRoutingOriginDestination,
-    setRoutingWaypoint,
-} from "./Routing";
+    setRoutingCoordinates,
+    setRoutWaypoint,
+} from "./routing";
 
 const icon = L.icon({
     iconSize: [25, 41],
@@ -128,7 +127,7 @@ export async function getObjectByCoordinates(latitude, longitude) {
             "\n Using default destination instead.",
             "Error: Unable to locate"
         );
-        return DEFAULT_DESTINATION;
+        return DEFAULT_LOCATION;
     }
     return {
         coordinates: {
@@ -140,12 +139,12 @@ export async function getObjectByCoordinates(latitude, longitude) {
 }
 
 export const My_Map = React.forwardRef((props, ref) => {
-    const { origin, setOrigin } = useContext(OriginContext);
+    const { origin, setOrigin } = useContext(FirstLocationCT);
     const { centerLocation, setCenterLocation } = useContext(
-        CenterLocationContext
+        CurrentLocationCT
     );
-    const { setDestination } = useContext(DestinationContext);
-    const { destination } = useContext(DestinationContext);
+    const { setDestination } = useContext(SecondLocationCT);
+    const { destination } = useContext(SecondLocationCT);
 
     const [position, setPosition] = React.useState(null);
 
@@ -239,7 +238,7 @@ export const My_Map = React.forwardRef((props, ref) => {
                     coordinates: location.coordinates,
                     wikipedia: data,
                 });
-                setRoutingWaypoint(location.coordinates);
+                setRoutWaypoint(location.coordinates);
                 // add a popup to the marker with the wikipedia info
                 L.marker([lat, lng], { icon })
                     .addTo(map.target)
@@ -276,7 +275,7 @@ export const My_Map = React.forwardRef((props, ref) => {
                     coordinates: location.coordinates,
                     wikipedia: data,
                 });
-                setRoutingWaypoint(location.coordinates);
+                setRoutWaypoint(location.coordinates);
                 // add a popup to the marker with the wikipedia info
                 L.marker([lat, lng], { icon })
                     .addTo(map.target)
@@ -299,10 +298,10 @@ export const My_Map = React.forwardRef((props, ref) => {
             .catch((error) => {
                 console.error("Error getting current location:", error);
                 setPosition(
-                    DEFAULT_ORIGIN.coordinates.lat,
-                    DEFAULT_ORIGIN.coordinates.lng
+                    DEFAULT_LOCATION.coordinates.lat,
+                    DEFAULT_LOCATION.coordinates.lng
                 );
-                setCenterLocation(DEFAULT_ORIGIN);
+                setCenterLocation(DEFAULT_LOCATION);
             });
     }, []);
 
@@ -354,10 +353,10 @@ export const My_Map = React.forwardRef((props, ref) => {
                             .catch((error) => {
                                 console.error("Error getting current location:", error);
                                 setPosition(
-                                    DEFAULT_ORIGIN.coordinates.lat,
-                                    DEFAULT_ORIGIN.coordinates.lng
+                                    DEFAULT_LOCATION.coordinates.lat,
+                                    DEFAULT_LOCATION.coordinates.lng
                                 );
-                                setCenterLocation(DEFAULT_ORIGIN);
+                                setCenterLocation(DEFAULT_LOCATION);
                             });
                         return;
 

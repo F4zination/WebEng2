@@ -6,11 +6,11 @@ import "../css/app.css";
 import "../css/info_sheet.css";
 import {
   DEFAULT_WIKI,
-  DestinationContext,
-  OriginContext,
-  CenterLocationContext,
-} from "../js/Context";
-import { setRoutingOriginDestination } from "./Routing";
+  SecondLocationCT,
+  FirstLocationCT,
+  CurrentLocationCT,
+} from "../js/context";
+import { setRoutingCoordinates } from "./routing";
 
 /**
  * Call to wikipedia API with a given place name and return the corresponding text
@@ -56,9 +56,9 @@ export async function getWikipediaByCity(placeName) {
  * @returns {JSX.Element} the information sheet element
  */
 export default function infosheet() {
-  const { destination } = useContext(DestinationContext);
-  const { origin } = useContext(OriginContext);
-  const { centerLocation } = useContext(CenterLocationContext);
+  const { destination } = useContext(SecondLocationCT);
+  const { origin } = useContext(FirstLocationCT);
+  const { centerLocation } = useContext(CurrentLocationCT);
 
   /**
    * Navigate to the location that was searched of clicked last
@@ -67,7 +67,7 @@ export default function infosheet() {
   async function startNavigation() {
     f7.sheet.close(".infosheet");
     console.log(origin.coordinates, destination.coordinates);
-    setRoutingOriginDestination(origin.coordinates, destination.coordinates);
+    setRoutingCoordinates(origin.coordinates, destination.coordinates);
   }
 
   // Properties for the sheet element

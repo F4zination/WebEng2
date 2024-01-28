@@ -15,11 +15,11 @@ import {
   Button
 } from 'framework7-react';
 import {
-  DestinationContext,
-  OriginContext,
-  CenterLocationContext,
-  DEFAULT_DESTINATION,
-} from '../js/Context';
+  SecondLocationCT,
+  FirstLocationCT,
+  CurrentLocationCT,
+  DEFAULT_LOCATION,
+} from '../js/context.js';
 import {
   getCoordinatesByCityName,
   My_Map,
@@ -28,9 +28,9 @@ import WikiBox from '../components/info_sheet.jsx';
 import SearchBar from '../components/search_bar.jsx'
 
 const HomePage = () => {
-  const [destination, setDestination] = useState(DEFAULT_DESTINATION);
+  const [destination, setDestination] = useState(DEFAULT_LOCATION);
   const [origin, setOrigin] = useState({});
-  const [centerLocation, setCenterLocation] = useState(DEFAULT_DESTINATION);
+  const [centerLocation, setCenterLocation] = useState(DEFAULT_LOCATION);
 
   const myMapRef = useRef();
 
@@ -70,14 +70,14 @@ const HomePage = () => {
       </Navbar>
 
       {/* Page content */}
-      <DestinationContext.Provider value={{ destination, setDestination }}>
-        <CenterLocationContext.Provider value={{ centerLocation, setCenterLocation }}>
-          <OriginContext.Provider value={{ origin, setOrigin }}>
+      <SecondLocationCT.Provider value={{ destination, setDestination }}>
+        <CurrentLocationCT.Provider value={{ centerLocation, setCenterLocation }}>
+          <FirstLocationCT.Provider value={{ origin, setOrigin }}>
             <WikiBox />
             <My_Map ref={myMapRef} />
-          </OriginContext.Provider>
-        </CenterLocationContext.Provider>
-      </DestinationContext.Provider>
+          </FirstLocationCT.Provider>
+        </CurrentLocationCT.Provider>
+      </SecondLocationCT.Provider>
     </Page >
   );
 };
