@@ -171,43 +171,6 @@ export const My_Map = React.forwardRef((props, ref) => {
     });
   }
 
-  //Call to wikipedia API
-  async function fetchWikipediaInfo(placeName) {
-    const formattedPlaceName = encodeURIComponent(placeName);
-    const endpoint = `https://de.wikipedia.org/w/api.php?`;
-    const params = {
-      action: "query",
-      prop: "extracts|info",
-      exintro: "true",
-      explaintext: "true",
-      inprop: "url",
-      titles: formattedPlaceName,
-      format: "json",
-      origin: "*",
-    };
-
-    const url = endpoint + new URLSearchParams(params).toString();
-
-    return fetch(url)
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then((data) => {
-        const page = Object.values(data.query.pages)[0];
-        return {
-          title: page.title,
-          extract: page.extract,
-          fullurl: page.fullurl,
-        };
-      })
-      .catch((error) => {
-        console.error("Fetching Wikipedia data failed:", error);
-      });
-  }
-
   function handleClickEvent(map, lat, lng) {
     console.log("You clicked the map at LAT: " + lat + " and LONG: " + lng);
     // clear the last marker

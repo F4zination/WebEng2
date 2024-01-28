@@ -1,15 +1,5 @@
-/**
- * The infosheet component is used to display the wikipedia information.
- */
 import React, { useContext } from "react";
-import {
-  Sheet,
-  BlockTitle,
-  f7,
-  Button,
-  Icon,
-  MessagesTitle,
-} from "framework7-react";
+import { Sheet, BlockTitle, f7, Button, Icon } from "framework7-react";
 import Framework7 from "framework7";
 import { $ } from "dom7";
 import "../css/app.css";
@@ -23,26 +13,47 @@ import {
 import { setRoutingOriginDestination } from "./Routing";
 
 /**
- * Get the wikitext for a given city
- * @param {string} city - the city to get the wikitext for
- * @returns {Promise<string>} - the wikitext
+ * Call to wikipedia API with a given place name and return the corresponding text
+ * @param {string} place - the the place name to search for
+ * @returns {Promise<string>} - the text for the place
  */
-export async function getWikipediaByCity(city) {
-  return fetch(
-    `https://en.wikipedia.org/w/api.php?origin=*&format=json&action=query&prop=extracts&exintro&explaintext&redirects=1&exsentences=10&titles=${city}`
-  )
-    .then((response) => response.json())
-    .then((json) => {
+export async function getWikipediaByCity(placeName) {
+  const formattedPlaceName = encodeURIComponent(placeName);
+  const endpoint = `https://de.wikipedia.org/w/api.php?`;
+  const params = {
+    action: "query",
+    prop: "extracts|info",
+    exintro: "true",
+    explaintext: "true",
+    inprop: "url",
+    titles: formattedPlaceName,
+    format: "json",
+    origin: "*",
+  };
+
+  const url = endpoint + new URLSearchParams(params).toString();
+
+  return fetch(url)
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then((data) => {
       return (
-        json.query.pages[Object.keys(json.query.pages)[0]].extract ||
+        data.query.pages[Object.keys(data.query.pages)[0]].extract ||
         DEFAULT_WIKI
       );
+    })
+    .catch((error) => {
+      console.error("Fetching Wikipedia data failed:", error);
     });
 }
 
 /**
- * Generates the wikipedia box
- * @returns {JSX.Element} - the wikipedia box
+ * Create a information sheet for a given city
+ * @returns {JSX.Element} the information sheet element
  */
 export default function infosheet() {
   const { destination } = useContext(DestinationContext);
@@ -50,7 +61,7 @@ export default function infosheet() {
   const { centerLocation } = useContext(CenterLocationContext);
 
   /**
-   * Start the navigation to the destination
+   * Navigate to the location that was searched of clicked last
    * @returns {Promise<void>}
    */
   async function startNavigation() {
@@ -59,23 +70,23 @@ export default function infosheet() {
     setRoutingOriginDestination(origin.coordinates, destination.coordinates);
   }
 
-  // the props used for the sheet element
-  let sheetProps = {
+  // Properties for the sheet element
+  let properties = {
     className: "infosheet",
     style: { height: "auto", maxHeight: "100%" },
     backdrop: true,
-    swipeToClose: true,
-    swipeToStep: true,
     closeByBackdropClick: true,
+    swipeToStep: true,
+    swipeToClose: true,
     closeOnEscape: true,
-    side: "right", // Add this line to make the sheet collapse from the right
   };
+
   if (Framework7.device.desktop) {
-    sheetProps.swipeToStep = false;
+    properties.swipeToStep = false;
   }
 
   return (
-    <Sheet {...sheetProps}>
+    <Sheet {...properties}>
       <div className="sheet-inner">
         <div className="sheet-modal-swipe-step" id="infosheet-location">
           <div
