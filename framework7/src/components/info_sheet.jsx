@@ -114,10 +114,11 @@ export default function infosheet() {
           id="infosheet-page-content"
           style={{
             maxHeight: window.innerHeight - $("#infosheet-location").height(),
+            color: "black",
           }}
         >
           <div className="padding-horizontal padding-bottom"></div>
-          <BlockTitle medium className="margin-top no-margin-left">
+          <BlockTitle medium className="margin-top no-margin-left" color="black">
             Wikipedia
           </BlockTitle>
           <p>{centerLocation.wikipedia}</p>
